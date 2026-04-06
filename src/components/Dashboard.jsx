@@ -12,8 +12,8 @@ export default function Dashboard() {
     const [expandedTicker, setExpandedTicker] = useState(null);
     const [toggles, setToggles] = useState({
         kijun129: true,
-        cloud: true,
-        chikou: true
+        cloud: false,
+        chikou: false
     });
 
     useEffect(() => {
@@ -24,6 +24,16 @@ export default function Dashboard() {
             setLoading(false);
         });
     }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') setExpandedTicker(null);
+        };
+        if (expandedTicker) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [expandedTicker]);
 
     const boardData = useMemo(() => {
         return Object.keys(tickersData).map(ticker => {

@@ -2,8 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { createChart } from 'lightweight-charts';
 import { calculateKijunSen, calculateFullIchimoku, calculateSMA } from '../utils/ichimoku';
 
-export default function ChartWidget({ data, height = 280, toggles = { kijun129: true, cloud: true, chikou: true } }) {
+export default function ChartWidget({ data, height = 280, toggles = { kijun129: true, cloud: false, chikou: false } }) {
     const chartContainerRef = useRef();
+    const tooltipRef = useRef();
 
     useEffect(() => {
         if (!data || data.length === 0) return;
@@ -132,6 +133,42 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
         }));
         volumeSeries.setData(volumeData);
 
+        const formatP = (p) => p.toLocaleString('vi-VN');
+        const updateTooltip = (candleData) => {
+            if (!tooltipRef.current || !candleData) return;
+            tooltipRef.current.style.display = 'flex';
+            tooltipRef.current.innerHTML = `
+                <span style="color:var(--text-secondary)">O:</span> ${formatP(candleData.open)}&nbsp;&nbsp;
+                <span style="color:var(--text-secondary)">H:</span> ${formatP(candleData.high)}&nbsp;&nbsp;
+                <span style="color:var(--text-secondary)">L:</span> ${formatP(candleData.low)}&nbsp;&nbsp;
+                <span style="color:var(--text-secondary)">C:</span> ${formatP(candleData.close)}
+            `;
+        };
+
+        // Khởi tạo hiển thị mặc định của nến cuối cùng
+        const lastCandle = data[data.length - 1];
+        updateTooltip(lastCandle);
+
+        // Tooltip hiện giá liên kết với điểm trỏ chuột
+        chart.subscribeCrosshairMove(param => {
+            if (
+                param.point === undefined ||
+                !param.time ||
+                param.point.x < 0 ||
+                param.point.y < 0
+            ) {
+                // Trả về mặc định nến cuối
+                updateTooltip(lastCandle);
+            } else {
+                const candleData = param.seriesData.get(candlestickSeries);
+                if (candleData) {
+                    updateTooltip(candleData);
+                } else {
+                    updateTooltip(lastCandle);
+                }
+            }
+        });
+
         window.addEventListener('resize', handleResize);
         chart.timeScale().fitContent();
 
@@ -139,7 +176,29 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
             window.removeEventListener('resize', handleResize);
             chart.remove();
         };
-    }, [data]);
+    }, [data, toggles]);
 
-    return <div ref={chartContainerRef} style={{ width: '100%', height: `${height}px` }} />;
+    return (
+        <div style={{ position: 'relative', width: '100%', height: `${height}px` }}>
+            <div 
+                ref={tooltipRef}
+                className="mono"
+                style={{
+                    position: 'absolute',
+                    top: '10px',
+                    left: '10px',
+                    zIndex: 100,
+                    fontSize: '0.85rem',
+                    color: '#fff',
+                    display: 'flex',
+                    gap: '4px',
+                    pointerEvents: 'none',
+                    background: 'rgba(0,0,0,0.4)',
+                    padding: '4px 8px',
+                    borderRadius: '4px'
+                }}
+            />
+            <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
+        </div>
+    );
 }
