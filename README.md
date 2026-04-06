@@ -1,16 +1,23 @@
-# React + Vite
+# Ichimoku 129 Scanner Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Một ứng dụng theo dõi chứng khoán Việt Nam sử dụng giao diện web với Dark Mode Premium. Dashboard tự động quét hơn 250 mã chứng khoán để tìm kiếm và vẽ đồ thị các mã đạt điểm mua đẹp khi giá nằm sát điểm hỗ trợ Kijun-sen chu kỳ 129.
 
-Currently, two official plugins are available:
+## Tính năng
+- **Bảng dữ liệu phân tích tự động:** Lọc và hiển thị các mã đạt điều kiện mua dựa trên khoảng cách với hỗ trợ Kijun 129.
+- **Biểu đồ chuyên nghiệp:** Tích hợp đồ thị nến, đường trung bình khối lượng (MA20 Volume), hệ thống mây Ichimoku (Kumo) và đường trễ (Chikou).
+- **Bộ lọc tuỳ biến:** Cho phép bật tắt từng đường chỉ báo một cách mượt mà.
+- **Phóng to:** Click vào icon góc trên mỗi mã để xem chi tiết biểu đồ to hơn.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Hình ảnh Mẫu (Screenshots)
 
-## React Compiler
+**1. Giao diện chính của Dashboard**
+![Dashboard View](docs/dashboard.png)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**2. Tiện ích phóng to (Modal) biểu đồ chi tiết**
+![Expanded Chart View](docs/expanded-chart.png)
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Cài đặt và sử dụng
+```bash
+npm install
+npm run dev
+```
