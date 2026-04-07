@@ -179,7 +179,14 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
         });
 
         window.addEventListener('resize', handleResize);
-        chart.timeScale().fitContent();
+        
+        // Hiển thị toàn bộ dữ liệu nhưng dời nến cuối về 3/4 màn hình (thêm 1/4 khoảng trống bên phải)
+        const totalBars = data.length;
+        const rightEmptyBars = Math.floor(totalBars / 3);
+        chart.timeScale().setVisibleLogicalRange({
+            from: 0,
+            to: totalBars - 1 + rightEmptyBars
+        });
 
         return () => {
             window.removeEventListener('resize', handleResize);

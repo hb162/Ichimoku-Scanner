@@ -17,12 +17,62 @@ export default function Dashboard() {
     });
 
     useEffect(() => {
-        fetchAllStocks((done, total) => {
-            setProgress({ done, total });
-        }).then((data) => {
-            setTickersData(data);
-            setLoading(false);
-        });
+        const loadData = (showLoading = true) => {
+            const cachedData = localStorage.getItem('ichimoku_data');
+            const cachedTime = localStorage.getItem('ichimoku_data_time');
+            const now = Date.now();
+            
+            // Nếu có cache và chưa quá 1 tiếng (3600000ms), dùng luôn, không fetch lại
+            if (cachedData && cachedTime && (now - parseInt(cachedTime) < 3600000)) {
+                setTickersData(JSON.parse(cachedData));
+                if (showLoading) setLoading(false);
+                return; // Nhờ return nên sẽ KHÔNG gọi API nữa
+            }
+
+            if (showLoading) setLoading(true);
+            fetchAllStocks((done, total) => {
+                if (showLoading) setProgress({ done, total });
+            }).then((data) => {
+                setTickersData(data);
+                
+                // Lưu vào cache
+                try {
+                    localStorage.setItem('ichimoku_data', JSON.stringify(data));
+                    localStorage.setItem('ichimoku_data_time', Date.now().toString());
+                } catch (e) {
+                    // Xử lý trường hợp QuotaExceededError nếu data quá lớn
+                    console.warn("Storage is full, couldn't cache data.", e);
+                }
+
+                if (showLoading) setLoading(false);
+            });
+        };
+
+        // Lần đầu tải: sẽ lấy từ mạc định (Load từ cache hoặc API)
+        loadData(true);
+
+        const checkAndUpdate = () => {
+            const now = new Date();
+            const day = now.getDay();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+
+            // Thứ 2 đến Thứ 6 (0 là Chủ nhật, 6 là Thứ bảy)
+            const isWeekday = day >= 1 && day <= 5;
+            const currentTotalMinutes = hours * 60 + minutes;
+            const startMinutes = 9 * 60 + 15; // 9h15
+            const endMinutes = 15 * 60 + 15;  // 15h15
+
+            if (isWeekday && currentTotalMinutes >= startMinutes && currentTotalMinutes <= endMinutes) {
+                // Cập nhật ngầm không làm gián đoạn UI
+                loadData(false);
+            }
+        };
+
+        // Thiết lập lặp 1 tiếng (3600000 milliseconds) gọi 1 lần
+        const intervalId = setInterval(checkAndUpdate, 60 * 60 * 1000);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     useEffect(() => {
