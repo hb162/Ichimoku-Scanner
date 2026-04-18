@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import SignalCard from './SignalCard';
 import ChartWidget from './ChartWidget';
 import RsiVolTab from './RsiVolTab';
+import VolSpikeTab from './VolSpikeTab';
 import { fetchAllStocks } from '../data/mockData';
 import { analyzeBuySignal } from '../utils/ichimoku';
 
@@ -139,7 +140,7 @@ export default function Dashboard() {
 
             {/* ── Main tab switcher ───────────────────────────────────── */}
             <div style={styles.mainTabBar}>
-                {[['ichimoku', '⛩️ Ichimoku 129'], ['rsivol', '🔍 RSI + Vol']].map(([key, label]) => (
+                {[['ichimoku', '⛩️ Ichimoku 129'], ['rsivol', '🔍 RSI + Vol'], ['volspike', '📊 Vol Spike']].map(([key, label]) => (
                     <button
                         key={key}
                         id={`main-tab-${key}`}
@@ -198,6 +199,10 @@ export default function Dashboard() {
 
             {mainTab === 'rsivol' && (
                 <RsiVolTab tickersData={tickersData} toggles={toggles} />
+            )}
+
+            {mainTab === 'volspike' && (
+                <VolSpikeTab tickersData={tickersData} toggles={toggles} />
             )}
 
             {expandedTicker && (

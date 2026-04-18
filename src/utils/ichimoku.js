@@ -209,3 +209,57 @@ export function calculateRSI(closes, period = 14) {
     return 100 - (100 / (1 + avgGain / avgLoss));
 }
 
+
+/**
+ * Phân tích Vol Spike: kiểm tra 3 phiên gần nhất có KL >= 1.5x MA20 hay không.
+ *
+ * Convention MA20 nhất quán với toàn project:
+ *   MA20 = trung bình volume của 20 phiên TRƯỚC 3 phiên đang xét
+ *   (index n-23 đến n-4, không gồm 3 phiên cuối)
+ *
+ * @param {Array}  data      - Mảng [{time, open, high, low, close, volume}, ...]
+ * @param {number} threshold - Ngưỡng tỷ lệ (mặc định 1.5)
+ * @returns {{ qualifies, ma20, vol3, ratios, minRatio, lastPrice, chgPct, lastDate }}
+ */
+export function analyzeVolSpike(data, threshold = 1.5) {
+    const n = data.length;
+
+    // Cần ít nhất 23 phiên: 20 phiên tính MA + 3 phiên kiểm tra
+    if (n < 23) return { qualifies: false };
+
+    // 20 phiên tính MA20: data[n-23] → data[n-4]
+    let maSum = 0;
+    for (let i = n - 23; i <= n - 4; i++) {
+        maSum += data[i].volume;
+    }
+    const ma20 = maSum / 20;
+
+    if (ma20 === 0) return { qualifies: false };
+
+    // 3 phiên gần nhất
+    const vol3 = [
+        data[n - 3].volume,
+        data[n - 2].volume,
+        data[n - 1].volume,
+    ];
+    const ratios = vol3.map(v => v / ma20);
+    const minRatio = Math.min(...ratios);
+
+    if (ratios.some(r => r < threshold)) return { qualifies: false };
+
+    // Thông tin giá phiên cuối
+    const last = data[n - 1];
+    const prev = data[n - 2];
+    const chgPct = prev.close !== 0 ? ((last.close - prev.close) / prev.close) * 100 : 0;
+
+    return {
+        qualifies: true,
+        ma20,
+        vol3,
+        ratios,
+        minRatio,
+        lastPrice: last.close,
+        chgPct,
+        lastDate: last.time,
+    };
+}
