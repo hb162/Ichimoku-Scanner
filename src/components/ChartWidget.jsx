@@ -40,6 +40,7 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
             borderVisible: false,
             wickUpColor: '#00FF87',
             wickDownColor: '#FF3366',
+            priceFormat: { type: 'price', precision: 0, minMove: 1 },
         });
         candlestickSeries.setData(data);
 
@@ -55,6 +56,7 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
                     title: '',
                     lastValueVisible: false,
                     priceLineVisible: false,
+                    priceFormat: { type: 'price', precision: 0, minMove: 1 },
                 });
                 senkouASeries.setData(ichimoku.senkouA);
 
@@ -65,6 +67,7 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
                     title: '',
                     lastValueVisible: false,
                     priceLineVisible: false,
+                    priceFormat: { type: 'price', precision: 0, minMove: 1 },
                 });
                 senkouBSeries.setData(ichimoku.senkouB);
             }
@@ -77,6 +80,7 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
                     title: '',
                     lastValueVisible: false,
                     priceLineVisible: false,
+                    priceFormat: { type: 'price', precision: 0, minMove: 1 },
                 });
                 chikouSeries.setData(ichimoku.chikou);
             }
@@ -94,24 +98,32 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
                     color: '#9F1919',
                     lineWidth: 2,
                     title: '',
+                    priceFormat: { type: 'price', precision: 0, minMove: 1 },
                 });
                 lineSeries.setData(kijunData);
             }
         }
 
         // === Đường MA20 Volume ===
-        const ma20Data = calculateSMA(data, 20, 'volume')
-            .filter(item => item.value !== null)
-            .map(item => ({ time: item.time, value: item.value }));
+        // Tính avg của 20 phiên TRƯỚC (không gồm phiên hiện tại) — khớp với scan script
+        const ma20Data = [];
+        for (let i = 20; i < data.length; i++) {
+            const slice = data.slice(i - 20, i); // 20 bar trước bar i
+            const avg = slice.reduce((sum, d) => sum + d.volume, 0) / 20;
+            ma20Data.push({ time: data[i].time, value: avg });
+        }
+
 
         if (ma20Data.length > 0) {
             const maSeries = chart.addLineSeries({
-                color: '#1E90FF', // DodgerBlue
-                lineWidth: 1.5,
-                title: 'MA20 Vol',
+                color: '#FFD700',       // Vàng neon — nổi bật trên nền tối
+                lineWidth: 2,
+                lineStyle: 0,           // solid
+                title: '',
                 priceScaleId: 'volume',
-                lastValueVisible: false,
+                lastValueVisible: true,
                 priceLineVisible: false,
+                priceFormat: { type: 'volume', precision: 0, minMove: 1 },
             });
             maSeries.setData(ma20Data);
         }
@@ -119,7 +131,7 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
         // Biểu đồ cột Khối lượng (Volume)
         const volumeSeries = chart.addHistogramSeries({
             color: '#26a69a',
-            priceFormat: { type: 'volume' },
+            priceFormat: { type: 'volume', precision: 0, minMove: 1 },
             priceScaleId: 'volume',
             title: '',
         });
@@ -133,7 +145,7 @@ export default function ChartWidget({ data, height = 280, toggles = { kijun129: 
         }));
         volumeSeries.setData(volumeData);
 
-        const formatP = (p) => p.toLocaleString('vi-VN');
+        const formatP = (p) => p.toLocaleString('vi-VN', { maximumFractionDigits: 0 });
         const updateTooltip = (candleData) => {
             if (!tooltipRef.current || !candleData) return;
 

@@ -25,6 +25,9 @@ function parseVPSData(json) {
     if (!json || json.s !== 'ok' || !json.t) return data;
 
     for (let i = 0; i < json.t.length; i++) {
+        // Bỏ qua ngày không giao dịch (volume = 0) — nhất quán với scan script
+        if (!json.v[i] || json.v[i] === 0) continue;
+
         // Chuyển unix timestamp (giây) sang định dạng YYYY-MM-DD
         const date = new Date(json.t[i] * 1000);
         const timeStr = date.toISOString().split('T')[0];

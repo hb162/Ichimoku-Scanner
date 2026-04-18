@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import SignalCard from './SignalCard';
 import ChartWidget from './ChartWidget';
+import RsiVolTab from './RsiVolTab';
 import { fetchAllStocks } from '../data/mockData';
 import { analyzeBuySignal } from '../utils/ichimoku';
 
 export default function Dashboard() {
-    const [filter, setFilter] = useState('BUY');
+    const [mainTab, setMainTab] = useState('ichimoku'); // 'ichimoku' | 'rsivol'
+    const [filter] = useState('BUY');
     const [tickersData, setTickersData] = useState({});
     const [loading, setLoading] = useState(true);
     const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -135,52 +137,67 @@ export default function Dashboard() {
                 </p>
             </header>
 
-            <div style={styles.filterBar}>
-                {['ALL', 'BUY', 'WATCHLIST', 'WAIT', 'SELL'].map(f => (
-                    <button 
-                        key={f}
-                        onClick={() => setFilter(f)}
+            {/* ── Main tab switcher ───────────────────────────────────── */}
+            <div style={styles.mainTabBar}>
+                {[['ichimoku', '⛩️ Ichimoku 129'], ['rsivol', '🔍 RSI + Vol']].map(([key, label]) => (
+                    <button
+                        key={key}
+                        id={`main-tab-${key}`}
+                        onClick={() => setMainTab(key)}
                         style={{
-                            ...styles.btn,
-                            background: filter === f ? 'var(--border-color)' : 'transparent',
-                            color: filter === f ? '#FFF' : 'var(--text-secondary)'
+                            ...styles.mainTabBtn,
+                            borderBottom: mainTab === key ? '2px solid var(--accent-neon-green)' : '2px solid transparent',
+                            color: mainTab === key ? '#fff' : 'var(--text-secondary)',
+                            background: mainTab === key ? 'rgba(0,255,135,0.06)' : 'transparent',
                         }}
                     >
-                        {f} <span style={styles.count}>({signalCounts[f] || 0})</span>
+                        {label}
                     </button>
                 ))}
             </div>
 
-            <div style={styles.toggleBar}>
-                <label style={styles.toggleLabel}>
-                    <input type="checkbox" checked={toggles.kijun129} onChange={() => setToggles({...toggles, kijun129: !toggles.kijun129})} />
-                    Đường 129
-                </label>
-                <label style={styles.toggleLabel}>
-                    <input type="checkbox" checked={toggles.cloud} onChange={() => setToggles({...toggles, cloud: !toggles.cloud})} />
-                    Mây Kumo
-                </label>
-                <label style={styles.toggleLabel}>
-                    <input type="checkbox" checked={toggles.chikou} onChange={() => setToggles({...toggles, chikou: !toggles.chikou})} />
-                    Đường Trễ
-                </label>
-            </div>
 
-            <div style={styles.grid}>
-                {filteredData.map(item => (
-                    <SignalCard 
-                        key={item.ticker} 
-                        ticker={item.ticker} 
-                        data={item.data} 
-                        analysis={item.analysis} 
-                        onExpand={setExpandedTicker}
-                        toggles={toggles}
-                    />
-                ))}
-            </div>
-            
-            {filteredData.length === 0 && (
-                <div style={styles.empty}>Không có mã nào thoả mãn bộ lọc hiện tại.</div>
+            {/* ── Nội dung theo tab ─────────────────────────────── */}
+            {mainTab === 'ichimoku' && (
+                <>
+
+
+                    <div style={styles.toggleBar}>
+                        <label style={styles.toggleLabel}>
+                            <input type="checkbox" checked={toggles.kijun129} onChange={() => setToggles({...toggles, kijun129: !toggles.kijun129})} />
+                            Đường 129
+                        </label>
+                        <label style={styles.toggleLabel}>
+                            <input type="checkbox" checked={toggles.cloud} onChange={() => setToggles({...toggles, cloud: !toggles.cloud})} />
+                            Mây Kumo
+                        </label>
+                        <label style={styles.toggleLabel}>
+                            <input type="checkbox" checked={toggles.chikou} onChange={() => setToggles({...toggles, chikou: !toggles.chikou})} />
+                            Đường Trễ
+                        </label>
+                    </div>
+
+                    <div style={styles.grid}>
+                        {filteredData.map(item => (
+                            <SignalCard
+                                key={item.ticker}
+                                ticker={item.ticker}
+                                data={item.data}
+                                analysis={item.analysis}
+                                onExpand={setExpandedTicker}
+                                toggles={toggles}
+                            />
+                        ))}
+                    </div>
+
+                    {filteredData.length === 0 && (
+                        <div style={styles.empty}>Không có mã nào thoả mãn bộ lọc hiện tại.</div>
+                    )}
+                </>
+            )}
+
+            {mainTab === 'rsivol' && (
+                <RsiVolTab tickersData={tickersData} toggles={toggles} />
             )}
 
             {expandedTicker && (
@@ -336,5 +353,21 @@ const styles = {
         color: '#FFF',
         fontSize: '1.5rem',
         cursor: 'pointer',
-    }
+    },
+    mainTabBar: {
+        display: 'flex',
+        gap: '4px',
+        borderBottom: '1px solid var(--border-color)',
+        marginBottom: '30px',
+    },
+    mainTabBtn: {
+        padding: '10px 24px',
+        border: 'none',
+        borderRadius: '8px 8px 0 0',
+        cursor: 'pointer',
+        fontSize: '0.95rem',
+        fontWeight: 600,
+        transition: 'all 0.2s',
+        outline: 'none',
+    },
 }

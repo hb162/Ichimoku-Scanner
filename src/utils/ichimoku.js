@@ -175,3 +175,37 @@ export function analyzeBuySignal(data) {
     // Nếu pass tất cả
     return { ...result, signal: 'BUY', reason: 'Giá nằm sát vùng an toàn, Kijun 129 đang đi ngang / hướng lên.' };
 }
+
+/**
+ * Tính RSI theo phương pháp Wilder (EMA smoothing).
+ * @param {number[]} closes - Mảng giá đóng cửa
+ * @param {number} period   - Chu kỳ (mặc định 14)
+ * @returns {number|null}   - Giá trị RSI cuối cùng hoặc null nếu không đủ dữ liệu
+ */
+export function calculateRSI(closes, period = 14) {
+    if (closes.length < period + 1) return null;
+
+    const changes = [];
+    for (let i = 1; i < closes.length; i++) {
+        changes.push(closes[i] - closes[i - 1]);
+    }
+
+    let avgGain = 0, avgLoss = 0;
+    for (let i = 0; i < period; i++) {
+        if (changes[i] > 0) avgGain += changes[i];
+        else avgLoss += Math.abs(changes[i]);
+    }
+    avgGain /= period;
+    avgLoss /= period;
+
+    for (let i = period; i < changes.length; i++) {
+        const gain = changes[i] > 0 ? changes[i] : 0;
+        const loss = changes[i] < 0 ? Math.abs(changes[i]) : 0;
+        avgGain = (avgGain * (period - 1) + gain) / period;
+        avgLoss = (avgLoss * (period - 1) + loss) / period;
+    }
+
+    if (avgLoss === 0) return 100;
+    return 100 - (100 / (1 + avgGain / avgLoss));
+}
+
